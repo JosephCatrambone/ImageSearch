@@ -42,7 +42,7 @@ public class PHash implements ImageHashFunction {
 				result[y*tempImg.getWidth() + x] = 0;
 				for(int v=0; v < tempImg.getHeight(); v++) {
 					for(int u=0; u < tempImg.getWidth(); u++) {
-						result[y*tempImg.getWidth()+x] += tempImg.getRGB(u, v) * Math.cos(Math.PI/((float)tempImg.getHeight())*(v+1.0/2.0)*y) * Math.cos(Math.PI/((float)tempImg.getWidth())*(u+1.0/2.0)*x);
+						result[y*tempImg.getWidth()+x] += ((byte)(0x000000FF&tempImg.getRGB(u, v))) * Math.cos(Math.PI/((float)tempImg.getHeight())*(v+1.0/2.0)*y) * Math.cos(Math.PI/((float)tempImg.getWidth())*(u+1.0/2.0)*x);
 					}
 				}
 			}
