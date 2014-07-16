@@ -2,10 +2,12 @@ Flask==0.10.1
 Jinja2==2.7.3
 MarkupSafe==0.23
 Pillow==2.5.1
+PyYAML==3.11
 Theano==0.6.0
 Werkzeug==0.9.6
 argparse==1.2.1
 itsdangerous==0.24
 numpy==1.8.1
+-e git://github.com/lisa-lab/pylearn2.git@165cfd89dddbcaac18d8d3b89f8b843135906cfa#egg=pylearn2-master
 scipy==0.14.0
 wsgiref==0.1.2
