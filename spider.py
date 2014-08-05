@@ -1,4 +1,4 @@
-#!/usr/env python
+#!/usr/bin/env python
 # spider.py -- The job which browses pages in the background, pulls images, and pushes them into the database.
 # Credit to Jake Austwick for an awesome scraper writeup which improved the accuracy and performance of this scraper ten-fold.
 # If lxml is not installing, aptitide install libxml2-dev libxslt-dev python-dev lib32z1-dev
