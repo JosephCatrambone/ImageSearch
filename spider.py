@@ -10,10 +10,12 @@ import urlparse
 import collections
 import cPickle as pickle # TODO: Some sites may have maliciously crafted URLs which can break pickle, possible?
 import time
+from hashlib import sha512 as hash
 
 FREEZE_FILE = "spider.pkl"
 STARTING_PAGE = "http://josephcatrambone.com"
 MEDIA_FOLDER = "./images/"
+REVISIT_DELAY = 60*60*6 # Revisit a site no more than four times in a day
 
 def save_state(state_vars, freeze_file=FREEZE_FILE):
 	fout = open(freeze_file, 'wb')
@@ -32,7 +34,7 @@ def restore_state(freeze_file=FREEZE_FILE):
 def main():
 	# Set up initial state
 	url_queue = collection.deque()
-	visited_urls = set()
+	last_visit = dict()
 	url_queue.append(STARTING_PAGE)
 
 	# Quick restore else save
@@ -44,8 +46,9 @@ def main():
 
 	# Begin main search loop
 	while len(url_queue):
+		now = time.time()
 		url = url_queue.popleft()
-		if url in visited_urls:
+		if url in last_visit and now - last_visit[url] < REVISIT_DELAY:
 			continue
 
 		# Get the page
@@ -62,12 +65,14 @@ def main():
 				url_queue.append(new_url)
 		for image in image_urls:
 			img_response = requests.get(image)
-			fout = open(os.path.join(MEDIA_FOLDER, image.split('/')[-1]), 'w') # TODO: Hash filename
+			filename = image.split('/')[-1] # To avoid conflicts, hash the filename
+			filename = hash(str(now) + filename).hexdigest() + filename[-4] # But keep the extension
+			fout = open(os.path.join(MEDIA_FOLDER, filename), 'w') 
 			fout.write(r.content)
 			fout.close()
 
 		# Mark this as complete and save our state
-		visited_urls.add(url)
+		visited_urls[url] = now
 		save_state((url_queue, visited_urls))
 
 		# Throttle
