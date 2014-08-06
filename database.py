@@ -18,8 +18,8 @@ def make_database_schema():
 	cursor.execute("""CREATE FUNCTION HAMMING_DISTANCE(bytea, bytea) RETURNS integer AS 'hamming.so', 'HAMMING_DISTANCE' LANGUAGE C STRICT;""") # Requires building the hamming func.
 	cursor.execute("""CREATE SEQUENCE images_id_seq""")
 	cursor.execute("""CREATE SEQUENCE hashes_id_seq""")
-	cursor.execute("""CREATE TABLE images (id INTEGER NOT NULL DEFAULT nextval('images_id_seq') PRIMARY KEY, url TEXT, parent_url VARCHAR(2083), filename VARCHAR(1024), modified TIMESTAMP DEFAULT now())""") # Max URL among web browsers: 2083
-	cursor.execute("""CREATE TABLE hashes (id INTEGER NOT NULL DEFAULT nextval('hashes_id_seq') PRIMARY KEY, image_id INTEGER REFERENCES images (id), data VARCHAR(512), algorithm VARCHAR(128), modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+	cursor.execute("""CREATE TABLE images (id INTEGER NOT NULL DEFAULT nextval('images_id_seq') PRIMARY KEY, url TEXT, parent_url TEXT, filename TEXT, modified TIMESTAMP DEFAULT now())""") # Max URL among web browsers: 2083
+	cursor.execute("""CREATE TABLE hashes (id INTEGER NOT NULL DEFAULT nextval('hashes_id_seq') PRIMARY KEY, image_id INTEGER REFERENCES images (id), data BYTEA, algorithm TEXT, modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
 	db.commit()
 	cursor.close()
 
@@ -43,14 +43,15 @@ def find_images(hash, algorithm, result_limit=50, result_offset=0):
 		distance 
 	LIMIT %s
 	OFFSET %s""",
-	(hash, algorithm, result_limit, result_offset))
+	(psycopg2.Binary(hash), algorithm, result_limit, result_offset))
 	result = cursor.fetchall()
 	cursor.close()
 	return result
 
 def create_hash(image_id, hash_value, hash_algorithm):
 	cursor = db.cursor()
-	cursor.execute("INSERT INTO hashes (image_id, data, algorithm) VALUES (%s, %s, %s)", (image_id, hash_value, hash_algorithm))
+	psycopg2.Binary(h)
+	cursor.execute("INSERT INTO hashes (image_id, data, algorithm) VALUES (%s, %s, %s)", (image_id, psycopg2.Binary(hash_value), hash_algorithm))
 	db.commit()
 	cursor.close()
 
