@@ -48,6 +48,14 @@ def find_images(hash, algorithm, result_limit=50, result_offset=0):
 	cursor.close()
 	return result
 
+def find_images_without_hash(algorithm):
+	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+	cursor.execute("SELECT images.id, images.filename FROM images WHERE NOT EXISTS (SELECT 1 FROM hashes WHERE images.id=hashes.image_id)")
+	# SELECT images.id, images.filename FROM images LEFT JOIN hashes ON images.id=hashes.image_id WHERE hashes.image_id is NULL;
+	result = cursor.fetchall()
+	cursor.close()
+	return result
+
 def create_hash(image_id, hash_value, hash_algorithm):
 	cursor = db.cursor()
 	psycopg2.Binary(h)
