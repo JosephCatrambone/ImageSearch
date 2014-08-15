@@ -67,7 +67,7 @@ def main():
 		for image in image_urls:
 			img_response = requests.get(image)
 			filename = image.split('/')[-1] # To avoid conflicts, hash the filename
-			filename = hash(str(now) + filename).hexdigest() + filename[-4] # But keep the extension
+			filename = hash(str(now) + filename).hexdigest() + filename[-4:] # But keep the extension
 			fout = open(os.path.join(MEDIA_FOLDER, filename), 'w') 
 			fout.write(img_response.content)
 			fout.close()
