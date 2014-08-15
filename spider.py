@@ -39,13 +39,13 @@ def main():
 	# Set up initial state
 	url_queue = deque()
 	last_visit = dict()
-	url_queue.append(STARTING_PAGE)
 
 	# Quick restore else save
 	last_state = restore_state()
 	if last_state:
 		url_queue, last_visit = last_state
 	else:
+		url_queue.append(STARTING_PAGE)
 		save_state((url_queue, last_visit))
 
 	# Begin main search loop
