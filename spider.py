@@ -7,7 +7,7 @@ import sys, os
 import requests
 from lxml import html
 import urlparse
-import collections
+from collections import deque
 import cPickle as pickle # TODO: Some sites may have maliciously crafted URLs which can break pickle, possible?
 import time
 from hashlib import sha512 as hash
@@ -27,22 +27,23 @@ def restore_state(freeze_file=FREEZE_FILE):
 		fin = open(freeze_file, 'rb')
 		state = pickle.load(fin)
 		fin.close()
-	except IOException as ioe:
+	except IOError as ioe:
 		return None
 	return state
 
 def main():
 	# Set up initial state
-	url_queue = collection.deque()
+	url_queue = deque()
 	last_visit = dict()
-	url_queue.append(STARTING_PAGE)
 
 	# Quick restore else save
 	last_state = restore_state()
 	if last_state:
 		url_queue, visited_urls = last_state
 	else:
-		save_state((url_queue, visited_urls))
+		url_queue.append(STARTING_PAGE)
+		url_queue.append("http://imgur.com")
+		save_state((url_queue, last_visit))
 
 	# Begin main search loop
 	while len(url_queue):
@@ -68,7 +69,7 @@ def main():
 			filename = image.split('/')[-1] # To avoid conflicts, hash the filename
 			filename = hash(str(now) + filename).hexdigest() + filename[-4] # But keep the extension
 			fout = open(os.path.join(MEDIA_FOLDER, filename), 'w') 
-			fout.write(r.content)
+			fout.write(img_response.content)
 			fout.close()
 
 		# Mark this as complete and save our state
