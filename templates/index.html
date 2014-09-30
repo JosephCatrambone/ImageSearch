@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<HTML>
+	<HEAD>
+		<meta charset="utf-8">
+		<title></title>
+		<link rel="stylesheet" href="" type="text/css" media="screen">	
+	</HEAD>
+	<BODY>
+		<img id="picture" src="" />
+		<input type="file" id="pictureInput" name="picture" accept="image/*"> <!-- capture> Add this at the end of the tag to make the camera immediately jump into camera mode.-->
+		<div id="imgCode"></div>
+
+		<script type="text/javascript">
+		(function() {
+			var httpRequest;
+
+			function getElement(id){ return document.getElementById(id); }
+
+			function makeRequest(url, postMethod, toSend, onSuccess, onError) {
+				if (window.XMLHttpRequest) {
+					httpRequest = new XMLHttpRequest();
+				} else if (window.ActiveXObject) {
+					try {
+						httpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+					} 
+					catch (e) {
+						try {
+							httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+						} 
+						catch (e) {}
+					}
+				}
+
+				if (!httpRequest) {
+					alert('Unable to instance httpRequest object.');
+					return false;
+				}
+
+				httpRequest.onreadystatechange = function() {
+					if (httpRequest.readyState === 4) {
+						if (httpRequest.status === 200) {
+							if(onSuccess) { onSuccess(httpRequest.responseText) };
+						} else {
+							if(onError) { onError() };
+						}
+					}
+				};
+				httpRequest.open(postMethod, url);
+				if(toSend != null) {
+					httpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+					httpRequest.send("json=" + encodeURIComponent(JSON.stringify(toSend)));
+				} else {
+					httpRequest.send();
+				}
+				return true;
+			}
+
+			function submitImage() {
+			    if(this.files && this.files[0]) {
+				var fileReader = new FileReader();
+				fileReader.onload = function(e) {
+					//getElement("img").src = e.target.result;
+					var fileData = e.target.result;
+					//var bytes = new Uint8Array(fileData);
+					getElement("imgCode").innerHTML = "Img src: " + window.btoa(fileData);
+					makeRequest("/submit_image", "POST", {"image_data":window.btoa(fileData)});
+					//getElement("img_code").innerHTML = e.target.result;
+				};
+				//fileReader.readAsDataURL(this.files[0]);
+				fileReader.readAsBinaryString(this.files[0]);
+			    }
+			}
+
+			function getImage(responseText) {
+				var json = JSON.parse(responseText);
+				var imageData = json['image_data'];
+				getElement("picture").src = "data:image/png;base64," + imageData; 
+			}
+
+			getElement("pictureInput").addEventListener("change", submitImage, false);
+
+			makeRequest('get_image', 'GET', null, getImage);
+		})();
+		</script>
+	</BODY>
+</HTML>
