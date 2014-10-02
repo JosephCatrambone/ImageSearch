@@ -71,23 +71,37 @@ def main():
 			if new_url.startswith('http'):
 				url_queue.append(new_url)
 		for image in image_urls:
-			img_response = requests.get(image)
-			# Read as image
-			temp_io = StringIO(img_response.content)
-			temp_io.seek(0)
-			img = Image.open(temp_io)
-			if img.size[0] < MIN_IMAGE_SIZE or img.size[1] < MIN_IMAGE_SIZE:
-				continue
-			# Save to file
-			filename = image.split('/')[-1] # To avoid conflicts, hash the filename
-			filename = hash(str(now) + filename).hexdigest() + filename[-4:] # But keep the extension
-			fout = open(os.path.join(MEDIA_ROOT, filename), 'w') 
-			fout.write(img_response.content)
-			fout.close()
-			# Push to database
-			pass
-			# Push to log
-			logging.info("spider.py: main: Added image {} -> {}".format(image, filename))
+			# Check to see if we did a get for this URL within the last time span
+			if image in last_visit and now - last_visit[image] < REVISIT_DELAY:
+				continue;
+			try:
+				# Otherwise get the image
+				img_response = requests.get(image)
+				# Mark our read time
+				last_visit[image] = now
+				# Read as image
+				temp_io = StringIO(img_response.content)
+				temp_io.seek(0)
+				img = Image.open(temp_io)
+				if img.size[0] < MIN_IMAGE_SIZE or img.size[1] < MIN_IMAGE_SIZE:
+					continue
+				# Save to file
+				filename = image.split('/')[-1] # To avoid conflicts, hash the filename
+				#filename = hash(str(now) + filename).hexdigest() + filename[-4:] # But keep the extension
+				filename = hash(img.tostring()).hexdigest() + filename[-4:]
+				filepath = os.path.join(MEDIA_ROOT, filename)
+				if not os.path.isfile(filepath):
+					fout = open(filepath, 'w') 
+					fout.write(img_response.content)
+					fout.close()
+				else:
+					logging.info("spider.py: main: Image already saved {}".format(image))
+				# Push to database
+				pass
+				# Push to log
+				logging.info("spider.py: main: Added image {} -> {}".format(image, filename[:10] + ".." + filename[-10:]))
+			except IOError as ioe:
+				logging.warn("spider.py: main: IOException while processing url {}: {}".format(image, str(ioe)))
 
 		# Mark this as complete and save our state
 		last_visit[url] = now
