@@ -7,6 +7,7 @@ import logging
 MEDIA_ROOT = "./images/"
 LOGGING_LEVEL = logging.INFO
 MIN_IMAGE_SIZE = 32
+SHARED_SECRET = os.environ['SHARED_SECRET']
 
 root_logger = logging.getLogger()
 root_logger.setLevel(LOGGING_LEVEL)
