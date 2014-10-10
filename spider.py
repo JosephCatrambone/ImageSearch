@@ -82,7 +82,9 @@ def spider_allowed(url, robot_rules):
 			robot_rules[url] = rules
 
 		except IOError as ioe:
-			return False
+			return True
+		except requests.exceptions.ConnectionError as ce:
+			return True
 
 	# We could perhaps translate the fnmatch pattern to regex with trnslate, but fnmatch looks better.
 	# If a rule fnmatches our url, then the robots.txt file has disallowed our reading of that file.
@@ -126,8 +128,17 @@ def main():
 		logging.info("spider.py: main: Visiting page {}".format(url))
 
 		# Get the page
-		response = requests.get(url, headers=HEADERS)
-		parsed_body = html.fromstring(response.content)
+		response = None
+		parsed_body = None
+		try:
+			response = requests.get(url, headers=HEADERS)
+			parsed_body = html.fromstring(response.content)
+		except requests.exceptions.ConnectionError as ce:
+			logging.info("spider.py: main: Connection error while getting url {}".format(url))
+			continue
+		except lxml.etree.XMLSyntaxError as xse:
+			logging.info("spider.py: main: Couldn't parse XML/HTML for url {}".format(url))
+			continue
 
 		# Find URLs
 		outbound_urls = [urlparse.urljoin(response.url, url) for url in parsed_body.xpath('//a/@href')]
@@ -169,10 +180,12 @@ def main():
 				logging.info("spider.py: main: Added image {} -> {}".format(image, filename[:10] + ".." + filename[-10:]))
 			except IOError as ioe:
 				logging.warn("spider.py: main: IOException while processing url {}: {}".format(image, str(ioe)))
+			except requests.packages.urllib3.exceptions.LocationParseError as pe:
+				logging.warn("spider.py: main: LocationParseError while getting url {}".format(image))
 
 		# Mark this as complete and save our state
 		last_visit[url] = now
-		save_state((url_queue, last_visit))
+		save_state((robot_rules, url_queue, last_visit))
 
 		# Throttle
 		time.sleep(1)
