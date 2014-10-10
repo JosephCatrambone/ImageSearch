@@ -115,7 +115,7 @@ def main():
 
 		# If the robots.txt file of this domain does not allow us, skip
 		if not spider_allowed(url, robot_rules):
-			logging.info("spider.py: main: robots.txt not allowing {}".format(url)
+			logging.info("spider.py: main: robots.txt not allowing {}".format(url))
 			continue
 
 		# Dump to logs
