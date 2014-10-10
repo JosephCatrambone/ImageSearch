@@ -73,7 +73,7 @@ def spider_allowed(url, robot_rules):
 						applies_to_our_spider = True
 					else:
 						applies_to_our_spider = False
-				else if command == "disallow":
+				elif command == "disallow":
 					if not applies_to_our_spider:
 						continue
 					rules.append(target)
