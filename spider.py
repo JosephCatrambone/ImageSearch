@@ -5,6 +5,7 @@
 
 import sys, os
 import logging
+import fnmatch # For glob matching in robots.txt
 from StringIO import StringIO
 from PIL import Image
 import requests
@@ -17,9 +18,11 @@ from hashlib import sha512 as hash
 
 from settings import MEDIA_ROOT, MIN_IMAGE_SIZE
 
+BOT_NAME = "ImageSearch_Bot"
 FREEZE_FILE = "spider.pkl"
 STARTING_PAGE = "http://josephcatrambone.com/spider.html"
 REVISIT_DELAY = 60*60*6 # Revisit a site no more than four times in a day
+HEADERS = {'User-Agent': BOT_NAME, 'From': "jo.jcat@gmail.com"}
 
 def save_state(state_vars, freeze_file=FREEZE_FILE):
 	fout = open(freeze_file, 'wb')
@@ -35,31 +38,90 @@ def restore_state(freeze_file=FREEZE_FILE):
 		return None
 	return state
 
+def spider_allowed(url, robot_rules):
+	# Get the domain of the URL
+	# http://www.josephcatrambone.com/robots.txt -> josephcatrambone.com
+	url = url.lower()
+
+	# From Wikipedia: The rules for http and https apply separately, and robots only applies to a single origin.
+	# That means http://a.example.com needs a robots.txt and http://example.com needs a different robots.txt.
+	# Thus, we can ignore this next part that strips off the https://blah.foo.etc.example.com
+	#if url.startswith("https://"):
+	#	url = url[len("https://"):]
+	#if url.startswith("http://"):
+	#	url = url[len("http://"):]
+	url = url[:url.find("/")]
+
+	rules = list()
+
+	if url not in robot_rules:
+		try:
+			response = requests.get(url + "/robots.txt")
+			# Split the rules into one rule per line and remove the comments.
+			comment_stripped = [rule[:rule.find("#"] for rule in response.content.split("\n")]
+			empty_stripped = [rule for rule in comment_stripped if len(rule) > 0]
+			# For each line, read either the diallowed or the user-agent command.
+			# If the user-agent command is found, check if it applies to us or ALL bots.
+			# If it's the disallowed command, append the disallowed sites to our rules list.
+			applies_to_our_spider = False
+			for line in empty_stripped:
+				chunks = line.split(":")
+				command = chunks[0].lower()
+				target = chunks[1].strip()
+				if command == "user-agent":
+					if target == BOT_NAME or target == "*":
+						applies_to_our_spider = True
+					else:
+						applies_to_our_spider = False
+				else if command == "disallow":
+					if not applies_to_our_spider:
+						continue
+					rules.append(target)
+			robot_rules[url] = rules
+			# We could perhaps translate the fnmatch pattern to regex with trnslate, but fnmatch looks better.
+		except IOError as ioe:
+			return False
+
+	for rule in robot_rules[url]:
+		if fnmatch.fnmatch(url, rule):
+			return False
+
+	return True # It is allowed.
+
+	
+
 def main():
 	# Set up initial state
 	url_queue = deque()
 	last_visit = dict()
+	robot_rules = dict()
 
 	# Quick restore else save
 	last_state = restore_state()
 	if last_state:
-		url_queue, last_visit = last_state
+		robot_rules, url_queue, last_visit = last_state
 	else:
 		url_queue.append(STARTING_PAGE)
-		save_state((url_queue, last_visit))
+		save_state((robot_rules, url_queue, last_visit))
 
 	# Begin main search loop
 	while len(url_queue):
 		now = time.time()
 		url = url_queue.popleft()
+
+		# If it is too early to revisit, skip this URL
 		if url in last_visit and now - last_visit[url] < REVISIT_DELAY:
+			continue
+
+		# If the robots.txt file of this domain does not allow us, skip
+		if not spider_allowed(url, robot_rules):
 			continue
 
 		# Dump to logs
 		logging.info("spider.py: main: Visiting page {}".format(url))
 
 		# Get the page
-		response = requests.get(url)
+		response = requests.get(url, headers=HEADERS)
 		parsed_body = html.fromstring(response.content)
 
 		# Find URLs
