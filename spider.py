@@ -50,38 +50,42 @@ def spider_allowed(url, robot_rules):
 	#	url = url[len("https://"):]
 	#if url.startswith("http://"):
 	#	url = url[len("http://"):]
-	url = url[:url.find("/")]
-
-	rules = list()
+	url = url[:url.find("/", len("https://")+1)]
 
 	if url not in robot_rules:
 		try:
+			rules = list()
+
 			response = requests.get(url + "/robots.txt")
-			# Split the rules into one rule per line and remove the comments.
-			comment_stripped = [rule[:rule.find("#")] for rule in response.content.split("\n")]
-			empty_stripped = [rule for rule in comment_stripped if len(rule) > 0]
-			# For each line, read either the diallowed or the user-agent command.
-			# If the user-agent command is found, check if it applies to us or ALL bots.
-			# If it's the disallowed command, append the disallowed sites to our rules list.
-			applies_to_our_spider = False
-			for line in empty_stripped:
-				chunks = line.split(":")
-				command = chunks[0].lower()
-				target = chunks[1].strip()
-				if command == "user-agent":
-					if target == BOT_NAME or target == "*":
-						applies_to_our_spider = True
-					else:
-						applies_to_our_spider = False
-				elif command == "disallow":
-					if not applies_to_our_spider:
-						continue
-					rules.append(target)
+			if response.ok:	
+				# Split the rules into one rule per line and remove the comments.
+				comment_stripped = [rule[:rule.find("#")] for rule in response.content.split("\n")]
+				empty_stripped = [rule for rule in comment_stripped if len(rule) > 0]
+				# For each line, read either the diallowed or the user-agent command.
+				# If the user-agent command is found, check if it applies to us or ALL bots.
+				# If it's the disallowed command, append the disallowed sites to our rules list.
+				applies_to_our_spider = False
+				for line in empty_stripped:
+					chunks = line.split(":")
+					command = chunks[0].lower()
+					target = chunks[1].strip()
+					if command == "user-agent":
+						if target == BOT_NAME or target == "*":
+							applies_to_our_spider = True
+						else:
+							applies_to_our_spider = False
+					elif command == "disallow":
+						if not applies_to_our_spider:
+							continue
+						rules.append(target)
+
 			robot_rules[url] = rules
-			# We could perhaps translate the fnmatch pattern to regex with trnslate, but fnmatch looks better.
+
 		except IOError as ioe:
 			return False
 
+	# We could perhaps translate the fnmatch pattern to regex with trnslate, but fnmatch looks better.
+	# If a rule fnmatches our url, then the robots.txt file has disallowed our reading of that file.
 	for rule in robot_rules[url]:
 		if fnmatch.fnmatch(url, rule):
 			return False
