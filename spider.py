@@ -18,7 +18,7 @@ from hashlib import sha512 as hash
 from settings import MEDIA_ROOT, MIN_IMAGE_SIZE
 
 FREEZE_FILE = "spider.pkl"
-STARTING_PAGE = "http://josephcatrambone.com"
+STARTING_PAGE = "http://josephcatrambone.com/spider.html"
 REVISIT_DELAY = 60*60*6 # Revisit a site no more than four times in a day
 
 def save_state(state_vars, freeze_file=FREEZE_FILE):
