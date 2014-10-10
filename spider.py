@@ -58,7 +58,7 @@ def spider_allowed(url, robot_rules):
 		try:
 			response = requests.get(url + "/robots.txt")
 			# Split the rules into one rule per line and remove the comments.
-			comment_stripped = [rule[:rule.find("#"] for rule in response.content.split("\n")]
+			comment_stripped = [rule[:rule.find("#")] for rule in response.content.split("\n")]
 			empty_stripped = [rule for rule in comment_stripped if len(rule) > 0]
 			# For each line, read either the diallowed or the user-agent command.
 			# If the user-agent command is found, check if it applies to us or ALL bots.
@@ -115,6 +115,7 @@ def main():
 
 		# If the robots.txt file of this domain does not allow us, skip
 		if not spider_allowed(url, robot_rules):
+			logging.info("spider.py: main: robots.txt not allowing {}".format(url)
 			continue
 
 		# Dump to logs
