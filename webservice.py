@@ -4,11 +4,13 @@ import sqlite3
 import atexit
 import base64
 import json
+from hashlib import sha512 as hash
 from StringIO import StringIO
 from glob import glob
 from random import randint, choice
 from PIL import Image
 from flask import Flask, request, g, render_template, Response
+from datetime import datetime, timedelta
 
 import settings
 import database
@@ -35,22 +37,10 @@ def get_image(id):
 	result = database.get_image(id);
 	return  
 
-# Ajax calls by the internal support tools
-@app.route("/add_image")
-def add_image():
-	pass
-
-@app.route("/add_page")
-def add_page():
-	pass
-
-@app.route("/add_hash")
-def add_hash():
-	pass
-
 # Ajax calls by the end users.
 @app.route("/search")
-def run_search():
+@app.route("/search/<algorithm>/<imagedata>")
+def run_search(algorithm=None, imagedata=None):
 	pass
 
 @app.route("/get_work") #, methods=['GET'])
@@ -58,9 +48,6 @@ def get_work():
         return Response(json.dumps(content), mimetype="application/json");
 
 # Helper functions
-def is_internal_tool():
-	pass
-
 def decode_img_from_base64(imgdata):
 	fio = StringIO();
 	fio.write(base64.b64decode(imgdata));
