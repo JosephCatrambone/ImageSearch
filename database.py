@@ -82,7 +82,7 @@ def get_image(id):
 	cursor.close()
 	return result
 
-def find_images(hash, algorithm, result_limit=50, result_offset=0):
+def get_images(hash, algorithm, result_limit=50, result_offset=0):
 	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 	cursor.execute("""
 	SELECT 
@@ -100,27 +100,27 @@ def find_images(hash, algorithm, result_limit=50, result_offset=0):
 	cursor.close()
 	return result
 
-def find_pages(hash, algorithm, result_limit=50, result_offset=0):
+def get_pages(image_ids, result_limit=50, result_offset=0):
 	raise NotImplemented() # Not done
 	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 	cursor.execute("""
 	SELECT
-		pages.url, pages.image_id, images.id, images.url, HAMMING_DISTANCE(%s, hashes.data) as distance
+		*
 	FROM
-		pages, images, hashes
+		pages
 	WHERE
-		hashes.algorithm = %s AND pages.image_id = hashes.image_id AND image.id = hashes.image_id
+		image_id IN %s
 	ORDER BY
 		distance
 	LIMIT %s
 	OFFSET %s
 	""",
-	(psycopg2.Binary(hash), algorithm, result_limit, result_offset))
+	(image_ids, result_limit, result_offset))
 	result = cursor.fetchall()
 	cursor.close()
 	return result
 
-def find_images_without_hash(algorithm):
+def get_images_without_hash(algorithm):
 	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 	cursor.execute("SELECT images.id, images.filename FROM images WHERE NOT EXISTS (SELECT 1 FROM hashes WHERE images.id=hashes.image_id)")
 	# SELECT images.id, images.filename FROM images LEFT JOIN hashes ON images.id=hashes.image_id WHERE hashes.image_id is NULL;
@@ -128,25 +128,26 @@ def find_images_without_hash(algorithm):
 	cursor.close()
 	return result
 
-def clean_old_images(timeago, valid_entry, update_last_access=True):
-	"""Selects images older than timeago and, for each image, runs valid_entry(image). If valid_entry returns false, removes the image."""
+def get_old_images(timeago, update_last_access=True):
+	"""Selects images older than timeago."""
 	now = datetime.now()
 	updated = 0
 	deleted = 0
 	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 	cursor.execute('SELECT * FROM images WHERE modified < %s', ((now-timedelta(seconds=timeago)), ))
 	results = cursor.fetchall();
-	for row in results: # Can't do for row in cursor since we're updating it.
-		if valid_entry(row):
-			cursor.execute("UPDATE images SET modified=%s WHERE id=%s", (now, row['id']))
-			updated += 1
-		else:
-			cursor.execute("DELETE FROM images WHERE id=%s", (row['id'], ))
-			deleted += 1
+	cursor.execute('UPDATE images SET modified = %s WHERE modified < %s', (now, (now-timedelta(seconds=timeago))))
 	db.commit()
 	cursor.close()
-	return updated, deleted
+	return results 
 
-def clean_old_hashes():
-	"""Remove hashes whose parent image has been deleted.  May not be necessary if REMOVE WITH CASCADE is done."""
-	pass
+def delete_images(image_ids):
+	"""Drop image IDs and related pages/hashes."""
+	cursor = db.cursor()
+	cursor.execute('DELETE FROM hashes WHERE hashes.image_id IN %s', (image_ids, ))
+	cursor.execute('DELETE FROM pages WHERE pages.image_id IN %s', (image_ids, ))
+	cursor.execute('DELETE FROM images WHERE id IN %s', (image_ids, ))
+	db.commit()
+	cursor.close()
+	return None
+
