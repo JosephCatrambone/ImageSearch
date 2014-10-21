@@ -38,6 +38,9 @@ def restore_state(freeze_file=FREEZE_FILE):
 		return None
 	return state
 
+def add_to_database(image_filename, image_data, image_url, page_data, page_url):
+	pass
+
 def spider_allowed(url, robot_rules):
 	# Get the domain of the URL
 	# http://www.josephcatrambone.com/robots.txt -> josephcatrambone.com
@@ -94,8 +97,6 @@ def spider_allowed(url, robot_rules):
 
 	return True # It is allowed.
 
-	
-
 def main():
 	# Set up initial state
 	url_queue = deque()
@@ -148,40 +149,40 @@ def main():
 		for new_url in outbound_urls:
 			if new_url.startswith('http'):
 				url_queue.append(new_url)
-		for image in image_urls:
+		for image_url in image_urls:
 			# Check to see if we did a get for this URL within the last time span
-			if image in last_visit and now - last_visit[image] < REVISIT_DELAY:
+			if image_url in last_visit and now - last_visit[image_url] < REVISIT_DELAY:
 				continue;
 			try:
 				# Otherwise get the image
-				img_response = requests.get(image)
+				image_response = requests.get(image_url)
 				# Mark our read time
-				last_visit[image] = now
+				last_visit[image_url] = now
 				# Read as image
-				temp_io = StringIO(img_response.content)
+				temp_io = StringIO(image_response.content)
 				temp_io.seek(0)
-				img = Image.open(temp_io)
-				if img.size[0] < MIN_IMAGE_SIZE or img.size[1] < MIN_IMAGE_SIZE:
+				image = Image.open(temp_io)
+				if image.size[0] < MIN_IMAGE_SIZE or image.size[1] < MIN_IMAGE_SIZE:
 					continue
 				# Save to file
-				filename = image.split('/')[-1] # To avoid conflicts, hash the filename
+				filename = image_url.split('/')[-1] # To avoid conflicts, hash the filename
 				#filename = hash(str(now) + filename).hexdigest() + filename[-4:] # But keep the extension
-				filename = hash(img.tostring()).hexdigest() + filename[-4:]
+				filename = hash(image.tostring()).hexdigest() + filename[-4:]
 				filepath = os.path.join(MEDIA_ROOT, filename)
 				if not os.path.isfile(filepath):
 					fout = open(filepath, 'w') 
-					fout.write(img_response.content)
+					fout.write(image_response.content)
 					fout.close()
 				else:
 					logging.info("spider.py: main: Image already saved {}".format(image))
 				# Push to database
-				pass
+				add_to_database(filename, image, image_url, response.content, url)
 				# Push to log
-				logging.info("spider.py: main: Added image {} -> {}".format(image, filename[:10] + ".." + filename[-10:]))
+				logging.info("spider.py: main: Added image {} -> {}".format(image_url, filename[:10] + ".." + filename[-10:]))
 			except IOError as ioe:
-				logging.warn("spider.py: main: IOException while processing url {}: {}".format(image, str(ioe)))
+				logging.warn("spider.py: main: IOException while processing url {}: {}".format(image_url, str(ioe)))
 			except requests.packages.urllib3.exceptions.LocationParseError as pe:
-				logging.warn("spider.py: main: LocationParseError while getting url {}".format(image))
+				logging.warn("spider.py: main: LocationParseError while getting url {}".format(image_url))
 
 		# Mark this as complete and save our state
 		last_visit[url] = now
