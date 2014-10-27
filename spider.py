@@ -38,8 +38,13 @@ def restore_state(freeze_file=FREEZE_FILE):
 		return None
 	return state
 
-def add_to_database(image_filename, image_data, image_url, page_data, page_url):
-	pass
+def add_page_to_database(page_url, image_filename):
+	from database import create_page
+	create_page(page_url, image_filename=image_filename)
+
+def add_image_to_database(image_filename, image_url, page_url):
+	from database import create_image
+	create_image(image_url, page_url, image_filename)
 
 def spider_allowed(url, robot_rules):
 	# Get the domain of the URL
@@ -102,6 +107,7 @@ def main():
 	url_queue = deque()
 	last_visit = dict()
 	robot_rules = dict()
+	image_filename_cache = dict() # Keep image filenames by URL so we can handle image leechers.  add_page_to_database requires an image filename.
 
 	# Quick restore else save
 	last_state = restore_state()
@@ -152,7 +158,13 @@ def main():
 		for image_url in image_urls:
 			# Check to see if we did a get for this URL within the last time span
 			if image_url in last_visit and now - last_visit[image_url] < REVISIT_DELAY:
-				continue;
+				# If we don't have a stored record of the filename, get the image again so we can calculate it.
+				filename = image_filename_cache.get(image_url, None):
+				if filename:
+					# Add the additional hotlink to the page.  This link was arrived at by another path.  Leech or extra linking.
+					add_page_to_database(url, filename)
+					continue;
+			# Either we've not seen this picture before or we don't know what it looks like because we lost the hash.  Get it again:
 			try:
 				# Otherwise get the image
 				image_response = requests.get(image_url)
@@ -162,8 +174,9 @@ def main():
 				temp_io = StringIO(image_response.content)
 				temp_io.seek(0)
 				image = Image.open(temp_io)
-				if image.size[0] < MIN_IMAGE_SIZE or image.size[1] < MIN_IMAGE_SIZE:
-					continue
+				# Make sure the image is above the minimum size before we store it in the database.
+				#if image.size[0] < MIN_IMAGE_SIZE or image.size[1] < MIN_IMAGE_SIZE: #TODO: This might cause problems with the anti-leech code above. Ignore min size, maybe?
+				#	continue
 				# Save to file
 				filename = image_url.split('/')[-1] # To avoid conflicts, hash the filename
 				#filename = hash(str(now) + filename).hexdigest() + filename[-4:] # But keep the extension
@@ -175,8 +188,11 @@ def main():
 					fout.close()
 				else:
 					logging.info("spider.py: main: Image already saved {}".format(image))
+				# Keep the filename so we can log other pages which link the images WITHOUT reloading the source.
+				image_filename_cache[image_url] = filename
 				# Push to database
-				add_to_database(filename, image, image_url, response.content, url)
+				add_page_to_database(url, filename)
+				add_image_to_database(filename, image_url, url)
 				# Push to log
 				logging.info("spider.py: main: Added image {} -> {}".format(image_url, filename[:10] + ".." + filename[-10:]))
 			except IOError as ioe:
