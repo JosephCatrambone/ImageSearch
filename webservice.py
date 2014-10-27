@@ -39,9 +39,9 @@ def get_image(id):
 
 # Ajax calls by the end users.
 @app.route("/search")
-@app.route("/search/<algorithm>/<imagedata>")
-def run_search(algorithm=None, imagedata=None):
-	pass
+@app.route("/search/<algorithm>")
+def run_search(algorithm=None):
+	return Response("Response!");
 
 @app.route("/get_work") #, methods=['GET'])
 def get_work():

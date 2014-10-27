@@ -41,21 +41,26 @@ function makeRequest(url, postMethod, toSend, onSuccess, onError) {
 	return true;
 }
 
-function submitImage() {
-	if(this.files && this.files[0]) {
+function submitImage(algorithm) {
+	if(!algorithm) { algorithm = "default"; }
+	var imageInput = $("#pictureInput");
+	if(imageInput && imageInput[0] && imageInput[0].files[0]) {
 		var fileReader = new FileReader();
 		fileReader.onload = function(e) {
 			var fileData = e.target.result;
-			makeRequest(
-				"/submit_image",
-				"POST",
-				{"image_data":window.btoa(fileData), "algorithm":algorithm},
-				function(data) {},
-				function(data) {}
-			);
+			$.ajax({
+				url: "/search/" + algorithm,
+				type: "POST",
+				dataType: "json",
+				data: window.btoa(fileData),
+				success: function(data) {
+					alert("HURR!");
+				}
+			});
+			//makeRequest("/search","POST",{"image_data":window.btoa(fileData), "algorithm":algorithm});
 		};
 		//fileReader.readAsDataURL(this.files[0]);
-		fileReader.readAsBinaryString(this.files[0]);
+		fileReader.readAsBinaryString(imageInput[0].files[0]);
 	}
 }
 
@@ -67,7 +72,6 @@ function getImage(responseText) {
 
 $(document).ready(function() {
 	//getElement("pictureInput").addEventListener("change", submitImage, false);
-	$("#pictureInput").on()
-	$("#submitButton").on('click', submitImage);
+	//$("#submitButton").on('click', submitImage);
 	//makeRequest('get_image', 'GET', null, getImage);
 });
