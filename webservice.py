@@ -24,8 +24,8 @@ STATIC_FILES = os.environ.get('STATIC_FILE_PATH', "static");
 @app.route("/")
 @app.route("/index.html")
 def index():
-	#return app.send_static_file(os.path.join(STATIC_FILES, 'index.html'));
-        return render_template('index.html');
+	return app.send_static_file(os.path.join(STATIC_FILES, 'index.html'));
+	#return render_template('index.html');
 
 @app.route("/static/<path:path>")
 def serve_static(path):
@@ -45,7 +45,7 @@ def run_search(algorithm=None, imagedata=None):
 
 @app.route("/get_work") #, methods=['GET'])
 def get_work():
-        return Response(json.dumps(content), mimetype="application/json");
+	return Response(json.dumps(content), mimetype="application/json");
 
 # Helper functions
 def decode_img_from_base64(imgdata):
@@ -56,11 +56,11 @@ def decode_img_from_base64(imgdata):
 	return img;
 
 def encode_img_as_base64_png(img):
-        sout = StringIO();
-        img.save(sout, format='PNG');
-        contents = sout.getvalue();
-        sout.close();
-        return base64.b64encode(contents);
+	sout = StringIO();
+	img.save(sout, format='PNG');
+	contents = sout.getvalue();
+	sout.close();
+	return base64.b64encode(contents);
 
 if __name__ == "__main__":
-        app.run(debug=True, host='0.0.0.0', port=4567);
+	app.run(debug=True, host='0.0.0.0', port=4567);
