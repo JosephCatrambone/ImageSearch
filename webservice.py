@@ -9,7 +9,7 @@ from StringIO import StringIO
 from glob import glob
 from random import randint, choice
 from PIL import Image
-from flask import Flask, request, g, render_template, Response
+from flask import Flask, request, g, render_template, Response, send_from_directory
 from datetime import datetime, timedelta
 
 import settings
@@ -24,12 +24,14 @@ STATIC_FILES = os.environ.get('STATIC_FILE_PATH', "static");
 @app.route("/")
 @app.route("/index.html")
 def index():
-	return app.send_static_file(os.path.join(STATIC_FILES, 'index.html'));
+	return app.send_static_file('index.html');
 	#return render_template('index.html');
 
 @app.route("/static/<path:path>")
+@app.route("/<path:path>")
 def serve_static(path):
-	return app.send_static_file(os.path.join(STATIC_FILES, path));
+	print("Loading item from path {}".format(path));
+	return app.send_static_file(path);
 	#return send_from_directory(os.path.join(STATIC_FILES, path));
 
 @app.route("/img/<int:id>")
@@ -38,8 +40,8 @@ def get_image(id):
 	return  
 
 # Ajax calls by the end users.
-@app.route("/search")
-@app.route("/search/<algorithm>")
+@app.route("/search", methods=['POST'])
+@app.route("/search/<algorithm>", methods=['POST'])
 def run_search(algorithm=None):
 	return Response("Response!");
 
