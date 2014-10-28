@@ -82,7 +82,14 @@ def get_image(id):
 	cursor.close()
 	return result
 
-def get_images(hash, algorithm, result_limit=50, result_offset=0):
+def get_images_from_ids(ids):
+	cursor = db.cursor()
+	cursor.execute("SELECT * FROM images WHERE id IN %s", (ids,))
+	result = cursor.fetchall()
+	cursor.close()
+	return result
+
+def get_images_from_hash(hash, algorithm, result_limit=50, result_offset=0):
 	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 	cursor.execute("""
 	SELECT 
