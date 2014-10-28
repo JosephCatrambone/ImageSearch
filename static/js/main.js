@@ -1,66 +1,30 @@
 var httpRequest;
 
-function getElement(id){ return document.getElementById(id); }
-
-function makeRequest(url, postMethod, toSend, onSuccess, onError) {
-	if (window.XMLHttpRequest) {
-		httpRequest = new XMLHttpRequest();
-	} else if (window.ActiveXObject) {
-		try {
-			httpRequest = new ActiveXObject("Msxml2.XMLHTTP");
-		}
-		catch (e) {
-			try {
-				httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+function submitImage(algorithm, imageFile) {
+	var fileReader = new FileReader();
+	fileReader.onload = function(e) {
+		var fileData = e.target.result;
+		$.ajax({
+			url: "/search/" + algorithm,
+			type: "POST",
+			dataType: "json",
+			data: window.btoa(fileData),
+			success: function(data) {
+				alert("HURR!");
 			}
-			catch (e) {}
-		}
-	}
-
-	if (!httpRequest) {
-		alert('Unable to instance httpRequest object.');
-		return false;
-	}
-
-	httpRequest.onreadystatechange = function() {
-		if (httpRequest.readyState === 4) {
-			if (httpRequest.status === 200) {
-				if(onSuccess) { onSuccess(httpRequest.responseText) };
-			} else {
-				if(onError) { onError() };
-			}
-		}
+		});
 	};
-	httpRequest.open(postMethod, url);
-	if(toSend != null) {
-		httpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-		httpRequest.send("json=" + encodeURIComponent(JSON.stringify(toSend)));
-	} else {
-		httpRequest.send();
-	}
-	return true;
+	fileReader.readAsBinaryString(imageFile);
 }
 
-function submitImage(algorithm) {
-	if(!algorithm) { algorithm = "default"; }
+//
+// Dom interface methods
+//
+function clickHandler(algorithm) {
+	if(!algorithm) { algorithm = ""; }
 	var imageInput = $("#pictureInput");
 	if(imageInput && imageInput[0] && imageInput[0].files[0]) {
-		var fileReader = new FileReader();
-		fileReader.onload = function(e) {
-			var fileData = e.target.result;
-			$.ajax({
-				url: "/search/" + algorithm,
-				type: "POST",
-				dataType: "json",
-				data: window.btoa(fileData),
-				success: function(data) {
-					alert("HURR!");
-				}
-			});
-			//makeRequest("/search","POST",{"image_data":window.btoa(fileData), "algorithm":algorithm});
-		};
-		//fileReader.readAsDataURL(this.files[0]);
-		fileReader.readAsBinaryString(imageInput[0].files[0]);
+		submitImage(algorithm, imageInput[0].files[0]);
 	}
 }
 
@@ -72,6 +36,8 @@ function getImage(responseText) {
 
 $(document).ready(function() {
 	//getElement("pictureInput").addEventListener("change", submitImage, false);
-	//$("#submitButton").on('click', submitImage);
+	$("#searchButton").on('click', submitImage);
+	$("#defaultSearchButton")
+	$("#exactSearchButton")
 	//makeRequest('get_image', 'GET', null, getImage);
 });
