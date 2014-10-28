@@ -5,10 +5,13 @@ function submitImage(algorithm, imageFile) {
 	fileReader.onload = function(e) {
 		var fileData = e.target.result;
 		$.ajax({
-			url: "/search/" + algorithm,
+			url: "/search",
 			type: "POST",
 			dataType: "json",
-			data: window.btoa(fileData),
+			data: {
+				imageData: window.btoa(fileData),
+				algorithm: algorithm
+			},
 			success: function(data) {
 				alert("HURR!");
 			}
@@ -36,8 +39,8 @@ function getImage(responseText) {
 
 $(document).ready(function() {
 	//getElement("pictureInput").addEventListener("change", submitImage, false);
-	$("#searchButton").on('click', submitImage);
-	$("#defaultSearchButton")
-	$("#exactSearchButton")
+	$("#searchButton").on('click', function(e){clickHandler("default");});
+	$("#defaultSearchButton").on('click', function(e){clickHandler("default");});
+	$("#exactSearchButton").on('click', function(){clickHandler("exact");});
 	//makeRequest('get_image', 'GET', null, getImage);
 });

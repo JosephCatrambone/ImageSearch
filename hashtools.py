@@ -2,14 +2,12 @@
 # hashtools.py -- The daemon which sits in the background and monitors for newly added images, then adds the hashes to the database.
 
 from hashlib import sha512
-from Pillow import PIL
+from PIL import Image
 import numpy
 import pickle
 
-HASH_ALGORITHMS = {'exact':exact}
-
 def exact(image):
-	return sha512(image).digest()
+	return sha512(image.tostring()).digest()
 
 #def phash(image, hash_size=32):
 #	image = image.convert("L").resize((hash_size, hash_size), Image.ANTIALIAS)
@@ -26,11 +24,13 @@ def nn_hash(image):
 	if NN is None:
 		pass # Load NN
 	#img = Image.open(filename)
-	img = img.convert('L').resize((128,128))
+	img = image.convert('L').resize((128,128))
 	arr = numpy.asarray(img)
 	arr = arr.reshape((1,128*128))
 	_, ha, _ = NN.forward_propagate(numpy.asmatrix(arr))
 	return ha
+
+HASH_ALGORITHMS = {'exact':exact, 'default':nn_hash, 'nn':nn_hash}
 
 def main():
 	pass
