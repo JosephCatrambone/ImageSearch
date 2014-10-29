@@ -19,8 +19,8 @@ def create_database_schema():
 	cursor.execute("""CREATE SEQUENCE images_id_seq""")
 	cursor.execute("""CREATE SEQUENCE pages_id_seq""")
 	cursor.execute("""CREATE SEQUENCE hashes_id_seq""")
-	cursor.execute("""CREATE TABLE images (id INTEGER NOT NULL DEFAULT nextval('images_id_seq') PRIMARY KEY, url TEXT, filename TEXT, modified TIMESTAMP DEFAULT now())""") # Max URL among web browsers: 2083
-	cursor.execute("""CREATE TABLE pages (id INTEGER NOT NULL DEFAULT nextval('pages_id_seq') PRIMARY KEY, image_id INTEGER REFERENCES images(id), url TEXT, modified TIMESTAMP DEFAULT now())""")
+	cursor.execute("""CREATE TABLE images (id INTEGER NOT NULL DEFAULT nextval('images_id_seq') PRIMARY KEY, url TEXT, filename TEXT, created TIMESTAMP DEFAULT now(), modified TIMESTAMP DEFAULT now())""") # Max URL among web browsers: 2083
+	cursor.execute("""CREATE TABLE pages (id INTEGER NOT NULL DEFAULT nextval('pages_id_seq') PRIMARY KEY, image_id INTEGER REFERENCES images(id), url TEXT, created TIMESTAMP DEFAULT now(), modified TIMESTAMP DEFAULT now())""")
 	cursor.execute("""CREATE TABLE hashes (id INTEGER NOT NULL DEFAULT nextval('hashes_id_seq') PRIMARY KEY, image_id INTEGER REFERENCES images (id), data BYTEA, algorithm TEXT, modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
 	db.commit()
 	cursor.close()
