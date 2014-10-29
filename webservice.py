@@ -35,11 +35,7 @@ def run_search(algorithm=None):
 		result_set = database.get_images_from_hash(hash, algorithm);
 		response['results'] = result_set;
 		response['success'] = True;
-	return Response(json.dumps(response));
-
-@app.route("/get_work") #, methods=['GET'])
-def get_work():
-	return Response(json.dumps(content), mimetype="application/json");
+	return Response(json.dumps(response), mimetype="application/json");
 
 # Web frontend data
 @app.route("/img/<int:id>")

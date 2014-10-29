@@ -107,6 +107,13 @@ def get_images_from_hash(hash, algorithm, result_limit=50, result_offset=0):
 	cursor.close()
 	return result
 
+def get_page(image_id):
+	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+	cursor.execute("SELECT * FROM pages WHERE image_id=%s", (image_id,))
+	result = cursor.fetchone()
+	cursor.close()
+	return result
+
 def get_pages(image_ids, result_limit=50, result_offset=0):
 	raise NotImplemented() # Not done
 	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
