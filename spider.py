@@ -23,8 +23,7 @@ FREEZE_FILE = "spider.pkl"
 STARTING_PAGE = "http://josephcatrambone.com/spider.html"
 REVISIT_DELAY = 60*60*6 # Revisit a site no more than four times in a day
 HEADERS = {'User-Agent': BOT_NAME, 'From': "jo.jcat@gmail.com"}
-THUMBNAIL_SIZE = 128
-THUMBNAIL_SUFFIX = "_thumb"
+THUMBNAIL_SIZE = 512
 
 def save_state(state_vars, freeze_file=FREEZE_FILE):
 	fout = open(freeze_file, 'wb')
@@ -50,7 +49,12 @@ def add_image_to_database(image_filename, image_url, page_url):
 
 def make_thumbnail(image, size=THUMBNAIL_SIZE):
 	downscale_factor = 1.0/max(image.size)
-	image_thumb = image.thumbnail((size*downscale_factor*image.size[0], size*downscale_factor*image.size[1]), Image.ANTIALIAS)
+	if image.size[0] < THUMBNAIL_SIZE and image.size[1] < THUMBNAIL_SIZE:
+		return image # If our image is smaller than the thumbnail size,
+	image_thumb = image.thumbnail(
+		(size*downscale_factor*image.size[0], size*downscale_factor*image.size[1]),
+		Image.ANTIALIAS
+	)
 	return image_thumb
 
 def spider_allowed(url, robot_rules):
@@ -190,11 +194,11 @@ def main():
 				filename = hash(image.tostring()).hexdigest() + filename[-4:]
 				filepath = os.path.join(MEDIA_ROOT, filename)
 				if not os.path.isfile(filepath):
-					fout = open(filepath, 'w') 
-					fout.write(image_response.content)
-					fout.close()
+					#fout = open(filepath, 'w')
+					#fout.write(image_response.content)
+					#fout.close()
 					thumbnail = make_thumbnail(image)
-					thumbnail.save(filepath[:-4] + THUMBNAIL_SUFFIX + filepath[-4:])
+					thumbnail.save(filepath)
 				else:
 					logging.info("spider.py: main: Image already saved {}".format(image))
 				# Keep the filename so we can log other pages which link the images WITHOUT reloading the source.
