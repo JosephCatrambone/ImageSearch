@@ -23,6 +23,8 @@ FREEZE_FILE = "spider.pkl"
 STARTING_PAGE = "http://josephcatrambone.com/spider.html"
 REVISIT_DELAY = 60*60*6 # Revisit a site no more than four times in a day
 HEADERS = {'User-Agent': BOT_NAME, 'From': "jo.jcat@gmail.com"}
+THUMBNAIL_SIZE = 128
+THUMBNAIL_SUFFIX = "_thumb"
 
 def save_state(state_vars, freeze_file=FREEZE_FILE):
 	fout = open(freeze_file, 'wb')
@@ -45,6 +47,11 @@ def add_page_to_database(page_url, image_filename):
 def add_image_to_database(image_filename, image_url, page_url):
 	from database import create_image
 	create_image(image_url, page_url, image_filename)
+
+def make_thumbnail(image, size=THUMBNAIL_SIZE):
+	downscale_factor = 1.0/max(image.size)
+	image_thumb = image.thumbnail((size*downscale_factor*image.size[0], size*downscale_factor*image.size[1]), Image.ANTIALIAS)
+	return image_thumb
 
 def spider_allowed(url, robot_rules):
 	# Get the domain of the URL
@@ -112,10 +119,10 @@ def main():
 	# Quick restore else save
 	last_state = restore_state()
 	if last_state:
-		robot_rules, url_queue, last_visit = last_state
+		robot_rules, url_queue, last_visit, image_filename_cache = last_state
 	else:
 		url_queue.append(STARTING_PAGE)
-		save_state((robot_rules, url_queue, last_visit))
+		save_state((robot_rules, url_queue, last_visit, image_filename_cache))
 
 	# Begin main search loop
 	while len(url_queue):
@@ -159,7 +166,7 @@ def main():
 			# Check to see if we did a get for this URL within the last time span
 			if image_url in last_visit and now - last_visit[image_url] < REVISIT_DELAY:
 				# If we don't have a stored record of the filename, get the image again so we can calculate it.
-				filename = image_filename_cache.get(image_url, None):
+				filename = image_filename_cache.get(image_url, None)
 				if filename:
 					# Add the additional hotlink to the page.  This link was arrived at by another path.  Leech or extra linking.
 					add_page_to_database(url, filename)
@@ -186,6 +193,8 @@ def main():
 					fout = open(filepath, 'w') 
 					fout.write(image_response.content)
 					fout.close()
+					thumbnail = make_thumbnail(image)
+					thumbnail.save(filepath[:-4] + THUMBNAIL_SUFFIX + filepath[-4:])
 				else:
 					logging.info("spider.py: main: Image already saved {}".format(image))
 				# Keep the filename so we can log other pages which link the images WITHOUT reloading the source.
@@ -202,7 +211,7 @@ def main():
 
 		# Mark this as complete and save our state
 		last_visit[url] = now
-		save_state((robot_rules, url_queue, last_visit))
+		save_state((robot_rules, url_queue, last_visit, image_filename_cache))
 
 		# Throttle
 		time.sleep(1)
