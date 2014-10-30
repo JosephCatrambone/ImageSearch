@@ -96,7 +96,7 @@ def get_images_from_hash(hash, algorithm, result_limit=50, result_offset=0):
 	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 	cursor.execute("""
 	SELECT 
-		images.id, images.url, images.filename, HAMMING_DISTANCE(%s, hashes.data) as distance 
+		images.id, images.url, images.created, images.filename, HAMMING_DISTANCE(%s, hashes.data) as distance 
 	FROM 
 		images, hashes 
 	WHERE 
