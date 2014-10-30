@@ -40,9 +40,9 @@ def destroy_database_schema():
 		print("Did not get yes.  Aborting.")
 
 # Begin shared API functions
-def create_image(url, parent_url, image_filename):
+def create_image(url, image_filename):
 	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
-	cursor.execute("INSERT INTO image (url, parent_url, filename) VALUES (%s, %s, %s) RETURNING id", (url, parent_url, image_filename))
+	cursor.execute("INSERT INTO images (url, filename) VALUES (%s, %s) RETURNING id", (url, image_filename))
 	new_id = cursor.fetchone()[0]
 	db.commit()
 	cursor.close()
@@ -57,7 +57,11 @@ def create_page(url, image_filename=None, image_id=None):
 			raise ValueError("Error while creating page for url {}.  Image filename and id are none.".format(url))
 		else: # Look up image_id from image_filename
 			cursor.execute("SELECT id FROM images WHERE filename=%s LIMIT 1", (image_filename,))
-			image_id = cursor.fetchone()[0]
+			image_obj = cursor.fetchone()
+			if image_obj:
+				image_id = image_obj[0]
+			else:
+				raise IOError("image_filename {} not found in database.".format(image_filename)) #LookupError, maybe?
 
 	cursor.execute("INSERT INTO pages (image_id, url) VALUES (%s, %s) RETURNING id", (image_id, url))
 	new_id = cursor.fetchone()[0]

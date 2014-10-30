@@ -39,7 +39,7 @@ def restore_state(freeze_file=FREEZE_FILE):
 		return None
 	return state
 
-def add_page_to_database(page_url, image_filename):
+def add_page_to_database(page_url, image_filename, page_content):
 	from database import create_page
 	create_page(page_url, image_filename=image_filename)
 
@@ -147,10 +147,12 @@ def main():
 
 		# Get the page
 		response = None
+		page_content = None
 		parsed_body = None
 		try:
 			response = requests.get(url, headers=HEADERS)
-			parsed_body = html.fromstring(response.content)
+			page_content = response.content
+			parsed_body = html.fromstring(page_content)
 		except requests.exceptions.ConnectionError as ce:
 			logging.info("spider.py: main: Connection error while getting url {}".format(url))
 			continue
@@ -173,7 +175,7 @@ def main():
 				filename = image_filename_cache.get(image_url, None)
 				if filename:
 					# Add the additional hotlink to the page.  This link was arrived at by another path.  Leech or extra linking.
-					add_page_to_database(url, filename)
+					add_page_to_database(url, filename, page_content)
 					continue;
 			# Either we've not seen this picture before or we don't know what it looks like because we lost the hash.  Get it again:
 			try:
@@ -204,8 +206,8 @@ def main():
 				# Keep the filename so we can log other pages which link the images WITHOUT reloading the source.
 				image_filename_cache[image_url] = filename
 				# Push to database
-				add_page_to_database(url, filename)
 				add_image_to_database(filename, image_url, url)
+				add_page_to_database(url, filename, page_content)
 				# Push to log
 				logging.info("spider.py: main: Added image {} -> {}".format(image_url, filename[:10] + ".." + filename[-10:]))
 			except IOError as ioe:
