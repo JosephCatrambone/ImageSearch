@@ -10,6 +10,7 @@ from glob import glob
 from random import randint, choice
 from PIL import Image
 from flask import Flask, request, g, render_template, Response, send_from_directory
+from werkzeug.contrib.fixers import ProxyFix
 from datetime import datetime, timedelta
 
 import settings
@@ -19,6 +20,7 @@ import hashtools
 # Globals
 app = Flask(__name__);
 app.secret_key = settings.SHARED_SECRET;
+app.wsgi_app = ProxyFix(app.wsgi_app) # For Gunicorn.
 STATIC_FILES = os.environ.get('STATIC_FILE_PATH', "static");
 
 # Ajax calls by the end users.
