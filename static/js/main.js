@@ -44,14 +44,14 @@ function clearResults() {
 }
 
 function displayResults(data) {
-	var imagePrefix = "/img/";
+	var imagePrefix = "/images/"; // Make sure this matches with settings.MEDIA_ROOT
 	var template = $("#resultTemplate").contents();
 	for(var index=0; index < data.length; index++) {
 		// From database.py schema:
-		// images.id, images.url, images.created, images.filename, distance 
+		// images.id, images.url, images.filename, distance 
 		var temp = template.clone();
-		temp.find("[name='image']").attr('src', imagePrefix + data[index]['filename'])
-		temp.find("[name='url']").attr('src', data[index]['url']);
+		temp.find("[name='image']").attr('src', imagePrefix + data[index][2])
+		temp.find("[name='url']").attr('src', data[index][1]);
 		temp.find("[name='info']").attr('src', "");
 		$("#results").append(temp);
 	}

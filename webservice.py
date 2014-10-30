@@ -43,10 +43,14 @@ def run_search(algorithm=None):
 	return Response(json.dumps(response), mimetype="application/json");
 
 # Web frontend data
-@app.route("/img/<int:id>")
-def get_image(id):
+@app.route("/img/id/<int:id>")
+def get_image_by_id(id):
 	result = database.get_image(id);
 	return result[1:];
+
+@app.route("/images/<filename>")
+def get_image(filename):
+	return send_from_directory(settings.MEDIA_ROOT, filename, as_attachment=False);
 
 @app.route("/", methods=['GET'])
 @app.route("/<path:path>", methods=['GET'])
