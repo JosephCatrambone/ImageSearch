@@ -39,13 +39,13 @@ def restore_state(freeze_file=FREEZE_FILE):
 		return None
 	return state
 
-def add_page_to_database(page_url, image_filename, page_content):
+def add_page_to_database(image_filename, page_url, page_content):
 	from database import create_page
 	create_page(page_url, image_filename=image_filename)
 
-def add_image_to_database(image_filename, image_url, page_url):
+def add_image_to_database(image_filename, image_url):
 	from database import create_image
-	create_image(image_url, page_url, image_filename)
+	create_image(image_url, image_filename)
 
 def make_thumbnail(image, size=THUMBNAIL_SIZE):
 	downscale_factor = 1.0/max(image.size)
@@ -175,7 +175,7 @@ def main():
 				filename = image_filename_cache.get(image_url, None)
 				if filename:
 					# Add the additional hotlink to the page.  This link was arrived at by another path.  Leech or extra linking.
-					add_page_to_database(url, filename, page_content)
+					add_page_to_database(filename, url, page_content)
 					continue;
 			# Either we've not seen this picture before or we don't know what it looks like because we lost the hash.  Get it again:
 			try:
@@ -199,17 +199,26 @@ def main():
 					#fout = open(filepath, 'w')
 					#fout.write(image_response.content)
 					#fout.close()
-					thumbnail = make_thumbnail(image)
-					thumbnail.save(filepath)
+					try:
+						thumbnail = make_thumbnail(image)
+						thumbnail.save(filepath)
+					except KeyError as ke:
+						logging.info("spider.py: main: Image extension unrecognized.  Adding .jpg suffix. {}".format(filename[-10:]))
+						filepath += ".jpg"
+						filename += ".jpg"
+						thumbnail = make_thumbnail(image)
+						thumbnail.save(filepath)
 				else:
 					logging.info("spider.py: main: Image already saved {}".format(image))
 				# Keep the filename so we can log other pages which link the images WITHOUT reloading the source.
 				image_filename_cache[image_url] = filename
 				# Push to database
-				add_image_to_database(filename, image_url, url)
-				add_page_to_database(url, filename, page_content)
+				add_image_to_database(filename, image_url)
+				add_page_to_database(filename, url, page_content)
 				# Push to log
 				logging.info("spider.py: main: Added image {} -> {}".format(image_url, filename[:10] + ".." + filename[-10:]))
+			except AttributeError as ae:
+				logging.warn("spider.py: main: AttributeError while processing url {}: {}".format(image_url, str(ae)))
 			except IOError as ioe:
 				logging.warn("spider.py: main: IOException while processing url {}: {}".format(image_url, str(ioe)))
 			except requests.packages.urllib3.exceptions.LocationParseError as pe:

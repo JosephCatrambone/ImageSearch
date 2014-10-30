@@ -49,7 +49,7 @@ def create_image(url, image_filename):
 	return new_id
 
 def create_page(url, image_filename=None, image_id=None):
-	cursor = db.cursor()
+	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 	if image_id is None:
 		if image_filename is None:
@@ -71,8 +71,7 @@ def create_page(url, image_filename=None, image_id=None):
 	return new_id
 
 def create_hash(image_id, hash_value, hash_algorithm):
-	cursor = db.cursor()
-	psycopg2.Binary(h)
+	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 	cursor.execute("INSERT INTO hashes (image_id, data, algorithm) VALUES (%s, %s, %s) RETURNING id", (image_id, psycopg2.Binary(hash_value), hash_algorithm))
 	new_id = cursor.fetchone()[0]
 	db.commit()
@@ -80,14 +79,14 @@ def create_hash(image_id, hash_value, hash_algorithm):
 	return new_id
 
 def get_image(id):
-	cursor = db.cursor()
+	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 	cursor.execute("SELECT * FROM images WHERE id=%s", (id,))
 	result = cursor.fetchone()
 	cursor.close()
 	return result
 
 def get_images_from_ids(ids):
-	cursor = db.cursor()
+	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 	cursor.execute("SELECT * FROM images WHERE id IN %s", (ids,))
 	result = cursor.fetchall()
 	cursor.close()
@@ -161,7 +160,7 @@ def get_old_images(timeago, update_last_access=True):
 
 def delete_images(image_ids):
 	"""Drop image IDs and related pages/hashes."""
-	cursor = db.cursor()
+	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 	cursor.execute('DELETE FROM hashes WHERE hashes.image_id IN %s', (image_ids, ))
 	cursor.execute('DELETE FROM pages WHERE pages.image_id IN %s', (image_ids, ))
 	cursor.execute('DELETE FROM images WHERE id IN %s', (image_ids, ))

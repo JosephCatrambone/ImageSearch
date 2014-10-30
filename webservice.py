@@ -31,6 +31,9 @@ def run_search(algorithm=None):
 	imageData = request.form['imageData']; # TODO: Add error checking.
 	algorithm = request.form['algorithm'];
 
+	if algorithm is None or algorithm == "" or algorithm == "default":
+		algorithm = "exact"; # Our default for now.
+
 	if algorithm in hashtools.HASH_ALGORITHMS.keys():
 		image = decode_img_from_base64(imageData);
 		hash = hashtools.HASH_ALGORITHMS[algorithm](image);

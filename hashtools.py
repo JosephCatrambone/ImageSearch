@@ -30,7 +30,7 @@ def nn_hash(image):
 	_, ha, _ = NN.forward_propagate(numpy.asmatrix(arr))
 	return ha
 
-HASH_ALGORITHMS = {'exact':exact, 'default':nn_hash, 'nn':nn_hash}
+HASH_ALGORITHMS = {'exact':exact, 'nn':nn_hash}
 
 def main():
 	pass
