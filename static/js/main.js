@@ -50,10 +50,8 @@ function displayResults(data) {
 		// From database.py schema:
 		// images.id, images.url, images.created, images.filename, distance 
 		var temp = template.clone();
-		temp.find("[name='image']");
 		temp.find("[name='image']").attr('src', imagePrefix + data[index]['filename'])
 		temp.find("[name='url']").attr('src', data[index]['url']);
-		temp.find("[name='created']").html("Created: " + data[index]['created']);
 		temp.find("[name='info']").attr('src', "");
 		$("#results").append(temp);
 	}
