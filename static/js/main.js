@@ -13,7 +13,9 @@ function submitImage(algorithm, imageFile) {
 				algorithm: algorithm
 			},
 			success: function(data) {
-				alert("HURR!");
+				if(data['success']) {
+					displayResults(data['results']);
+				}
 			}
 		});
 	};
@@ -35,6 +37,19 @@ function getImage(responseText) {
 	var json = JSON.parse(responseText);
 	var imageData = json['image_data'];
 	getElement("picture").src = "data:image/png;base64," + imageData;
+}
+
+function clearResults() {
+	$("#results").empty();
+}
+
+function displayResults(data) {
+	var template = $("#resultTemplate").contents();
+	for(var index=0; index < data.length; index++) {
+		// Change the template first, then clone it.
+		var temp = template.clone();
+		temp.find("[name='url']").html()
+	}
 }
 
 $(document).ready(function() {
