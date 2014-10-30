@@ -48,10 +48,11 @@ function displayResults(data) {
 	var template = $("#resultTemplate").contents();
 	for(var index=0; index < data.length; index++) {
 		// From database.py schema:
-		// images.id, images.url, images.filename, distance 
+		// images.id, images.url, images.filename, images.created, distance 
 		var temp = template.clone();
 		temp.find("[name='image']").attr('src', imagePrefix + data[index][2])
-		temp.find("[name='url']").attr('src', data[index][1]);
+		temp.find("[name='url']").attr('href', data[index][1]);
+		temp.find("[name='created']").html("First seen: " + data[index][3]);
 		temp.find("[name='info']").attr('src', "");
 		$("#results").append(temp);
 	}

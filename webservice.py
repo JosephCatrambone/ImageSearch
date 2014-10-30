@@ -40,7 +40,11 @@ def run_search(algorithm=None):
 		result_set = database.get_images_from_hash(hash, algorithm);
 		response['results'] = result_set;
 		response['success'] = True;
-	return Response(json.dumps(response), mimetype="application/json");
+
+	def date_handler(ob): # To handle the datetime object serialization from the database.
+		return ob.isoformat() if hasattr(ob, 'isoformat') else ob;
+
+	return Response(json.dumps(response, default=date_handler), mimetype="application/json");
 
 # Web frontend data
 @app.route("/img/id/<int:id>")
