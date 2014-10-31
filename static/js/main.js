@@ -1,6 +1,6 @@
-var httpRequest;
+var MAX_DISTANCE = 200;
 
-function submitImage(algorithm, imageFile) {
+function submitImage(algorithm, imageFile, onSuccess, onFailure) {
 	var fileReader = new FileReader();
 	fileReader.onload = function(e) {
 		var fileData = e.target.result;
@@ -14,9 +14,12 @@ function submitImage(algorithm, imageFile) {
 			},
 			success: function(data) {
 				if(data['success']) {
-					displayResults(data['results']);
+					onSuccess(data['results']);
+				} else {
+					onFailure(data);
 				}
-			}
+			},
+			failure: onFailure
 		});
 	};
 	fileReader.readAsBinaryString(imageFile);
@@ -26,10 +29,16 @@ function submitImage(algorithm, imageFile) {
 // Dom interface methods
 //
 function clickHandler(algorithm) {
+	clearResults();
 	if(!algorithm) { algorithm = ""; }
 	var imageInput = $("#pictureInput");
 	if(imageInput && imageInput[0] && imageInput[0].files[0]) {
-		submitImage(algorithm, imageInput[0].files[0]);
+		submitImage(
+			algorithm, 
+			imageInput[0].files[0],
+			function(results) { displayResults(results); },
+			function(err) { /* Show some error. */ }
+		);
 	}
 }
 
@@ -49,12 +58,20 @@ function displayResults(data) {
 	for(var index=0; index < data.length; index++) {
 		// From database.py schema:
 		// images.id, images.url, images.filename, images.created, distance 
-		var temp = template.clone();
-		temp.find("[name='image']").attr('src', imagePrefix + data[index][2])
-		temp.find("[name='url']").attr('href', data[index][1]);
-		temp.find("[name='created']").html("First seen: " + data[index][3]);
-		temp.find("[name='info']").attr('src', "");
-		$("#results").append(temp);
+		var id = data[index][0];
+		var url = data[index][1];
+		var filename = data[index][2];
+		var created = data[index][3];
+		var distance = data[index][4];
+		if(distance < MAX_DISTANCE) {
+			var temp = template.clone();
+			temp.find("[name='image']").attr('src', imagePrefix + filename)
+			temp.find("[name='url']").attr('href', url);
+			temp.find("[name='url']").text(url);
+			temp.find("[name='created']").html(created);
+			//temp.find("[name='info']").attr('src', "");
+			$("#results").append(temp);
+		}
 	}
 }
 
