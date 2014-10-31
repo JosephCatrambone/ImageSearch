@@ -45,7 +45,7 @@ Datum HAMMING_DISTANCE(PG_FUNCTION_ARGS)
 	char* st1 = (char*)data1;
 	char* st2 = (char*)data2;
 
-	for(index=0; index < length(data1)/8; ++index) { // TODO: 512 should be num_bytes, just as soon as I can figure out why it's not working.
+	for(index=0; index < 64; ++index) { // TODO: 512 should be num_bytes, just as soon as I can figure out why it's not working.
 		// Unroll loop internally
 		xor = st1[index] ^ st2[index];
 		dist += (xor&0x1); xor = xor >> 1;
