@@ -100,14 +100,12 @@ def get_images_from_hash(hash, algorithm, result_limit=50, result_offset=0, max_
 	FROM 
 		images, hashes 
 	WHERE 
-		hashes.algorithm=%s AND images.id = hashes.image_id AND HAMMING_DISTANCE(%s, hashes.data) < %s
+		hashes.algorithm=%s AND images.id = hashes.image_id
 	ORDER BY 
 		distance 
 	LIMIT %s
 	OFFSET %s""",
-	(psycopg2.Binary(hash), algorithm, psycopg2.Binary(hash), max_distance, result_limit, result_offset))
-	# TODO: If the hamming_distance is expensive to calculate we can probably just remove it after the fact.
-	# We're already iterating across the data a little when serializing it to JSON, so it's probably not so bad.
+	(psycopg2.Binary(hash), algorithm, result_limit, result_offset))
 	result = cursor.fetchall()
 	cursor.close()
 	return result
