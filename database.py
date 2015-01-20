@@ -103,6 +103,7 @@ def get_images_from_hash(hash, algorithm, result_limit=50, result_offset=0, max_
 		hashes.algorithm=%s AND images.id = hashes.image_id
 	ORDER BY 
 		distance 
+	ASC 
 	LIMIT %s
 	OFFSET %s""",
 	(psycopg2.Binary(hash), algorithm, result_limit, result_offset))
@@ -129,6 +130,7 @@ def get_pages(image_ids, result_limit=50, result_offset=0):
 		image_id IN %s
 	ORDER BY
 		distance
+	ASC 
 	LIMIT %s
 	OFFSET %s
 	""",
@@ -139,7 +141,7 @@ def get_pages(image_ids, result_limit=50, result_offset=0):
 
 def get_images_without_hash(algorithm):
 	cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
-	cursor.execute("SELECT images.id, images.filename FROM images WHERE NOT EXISTS (SELECT 1 FROM hashes WHERE images.id=hashes.image_id)")
+	cursor.execute("SELECT images.id, images.filename FROM images WHERE NOT EXISTS (SELECT 1 FROM hashes WHERE images.id=hashes.image_id AND hashes.algorithm='?')", (algorithm,))
 	# SELECT images.id, images.filename FROM images LEFT JOIN hashes ON images.id=hashes.image_id WHERE hashes.image_id is NULL;
 	result = cursor.fetchall()
 	cursor.close()
